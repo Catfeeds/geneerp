@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+		<title></title>
+		<link href="css/mui.min.css" rel="stylesheet">
+		<link href="css/style.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav own-main-background-color">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">用户登录</h1>
+		</header>
+
+		<div class="mui-content">
+			<div class="mui-card">
+				<form class="mui-input-group">
+					<div class="mui-input-row">
+						<label><span class="mui-icon mui-icon-person"></span></label>
+						<input id="input-username" type="text" class="mui-input-clear" placeholder="请输入手机号/邮箱/用户名">
+					</div>
+					<div class="mui-input-row">
+						<label><span class="mui-icon mui-icon-locked"></span></label>
+						<input id="input-password" type="password" class="mui-input-password" placeholder="请输入密码">
+					</div>
+				</form>
+			</div>
+			<div class="mui-button-row own-m15">
+				<button id="btn-login" type="button" class="mui-btn mui-btn-green mui-btn-block own-btn-green">登录</button>
+			</div>
+			<div class="mui-button-row">
+				<button id="btn-register" type="button" class="mui-btn mui-btn-link own-main-color own-font-size">快速注册</button>
+				<button id="btn-forget-password" type="button" class="mui-btn mui-btn-link own-font-size own-alert-color">忘记密码</button>
+			</div>
+
+		</div>
+
+		<script src="js/mui.min.js"></script>
+		<script src="js/app.js"></script>
+		<script>
+			mui.init({
+				swipeBack: true //启用右滑关闭功能
+			});
+			var username = app.get('input-username');
+			var password = app.get('input-password');
+
+			//检测提交信息
+			var checkLogin = function() {
+				if(!username.value || username.value.trim() == '') {
+					mui.toast("账号不能为空");
+					return false;
+				}
+				if(!password.value || password.value.trim() == '') {
+					mui.toast("密码不能为空");
+					return false;
+				}
+				ajaxLogin();
+			};
+
+			//ajax登录验证
+			var ajaxLogin = function() {
+				var wd = plus.nativeUI.showWaiting();
+
+				mui.ajax(app.api.userLogin, {
+					data: {
+						username: username.value,
+						password: password.value
+					},
+					dataType: 'json',
+					type: 'post',
+					timeout: 10000,
+					success: function(data) {
+						wd.close(); //关闭等待对话框
+						if(data.success == 1) {
+							app.userSet(data.data,true); //用户信息缓存本地
+							app.userStatus(); //触发用户状态
+							mui.back();
+						} else {
+							mui.toast(data.message);
+						}
+					},
+					error: function(xhr, type, errorThrown) {
+						wd.close(); //关闭等待对话框  
+						mui.toast('网络异常，请稍后再试');
+					}
+				});
+			};
+
+			//登录点击事件
+			var loginTap = function() {
+				app.tap('btn-login', checkLogin);
+			};
+
+			//注册点击事件
+			var registerTap = function() {
+				app.tap('btn-register', function() {
+					app.open('register.html');
+				});
+			};
+
+			//忘记密码点击事件
+			var forgetPasswordTap = function() {
+				app.tap('btn-forget-password', function() {
+					app.open('forget-password.html')
+				});
+			};
+
+			mui.plusReady(function() {
+				localStorage.setItem('token', '');
+				//检测本地的登录过的账号
+				if(localStorage.getItem('mobile')) {
+					username.value = localStorage.getItem('mobile');
+				}
+				//登录点击事件
+				loginTap();
+				//注册点击事件
+				registerTap();
+				//忘记密码点击事件
+				forgetPasswordTap();
+			});
+		</script>
+	</body>
+
+</html>

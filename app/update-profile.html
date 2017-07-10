@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+		<link href="css/mui.min.css" rel="stylesheet">
+		<link href="css/mui.picker.min.css" rel="stylesheet">
+		<link href="css/style.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav own-main-background-color">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">更新我的资料</h1>
+		</header>
+		<div class="mui-content">
+			<ul class="mui-table-view own-mt20">
+				<li class="mui-table-view-cell">
+					<label>生日</label>
+					<span id="birthday" class="own-mtl20"></span>
+					<button id="btn-birthday" class="btn mui-btn">选择</button>
+				</li>
+				<li class="mui-table-view-cell">
+					<label>地区</label>
+					<span id="area-text" class="own-mtl20"></span>
+					<input id="area-id" type="hidden">
+					<button id="btn-area" class="btn mui-btn">选择</button>
+				</li>
+				<li class="mui-table-view-cell">
+					<label class="own-l15">签名最多100个字符</label>
+					<textarea id="sign" rows="5" class="mui-input-clear"></textarea>
+				</li>
+			</ul>
+			<div class="mui-button-row own-m15">
+				<button id="btn-update" type="button" class="mui-btn mui-btn-block own-btn-green">更新</button>
+			</div>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/mui.picker.min.js"></script>
+		<script src="js/app.js"></script>
+		<script src="js/district-mobile.js"></script>
+		<script>
+			mui.init({
+				swipeBack: true //启用右滑关闭功能
+			});
+			var selectBirthday = function() {
+				var year = new Date().getFullYear();
+				var options = {
+					type: 'date',
+					value: localStorage.getItem('userbirthday'),
+					beginYear: 1902,
+					endYear: year
+				};
+				var picker = new mui.DtPicker(options);
+				picker.show(function(data) {
+					app.get('birthday').innerText = data.text;
+					picker.dispose();
+				});
+			};
+			var selectArea = function() {
+				//选择省市区
+				var city_picker = new mui.PopPicker({
+					layer: 3
+				});
+				city_picker.setData(districtData);
+				var area_ids = localStorage.getItem('userarea_id');
+				var area_array = area_ids.split(',');
+				//console.log(area_array);
+
+				city_picker.pickers[0].setSelectedValue(area_array[0].toString() || '', 0, function() {
+					setTimeout(function() {
+						city_picker.pickers[1].setSelectedValue(area_array[1].toString() || '', 0, function() {
+							setTimeout(function() {
+								city_picker.pickers[2].setSelectedValue(area_array[2].toString() || '', 0);
+							}, 100);
+						});
+					}, 100);
+				});
+
+				city_picker.show(function(items) {
+					app.get('area-id').value = items[0].value + ',' + (items[1].value || '') + ',' + (items[2].value || '');
+					app.get('area-text').innerText = items[0].text + ' ' + (items[1].text || '') + ' ' + (items[2].text || '');
+					city_picker.dispose();
+				});
+			};
+
+			var ajaxProfile = function() {
+				var wd = plus.nativeUI.showWaiting();
+				var data = {
+					birthday: app.get('birthday').innerText,
+					area_id: app.get('area-id').value,
+					sign: app.get('sign').value
+				};
+				console.log(JSON.stringify(data));
+				mui.ajax(app.api.updateProfile, {
+					data: data,
+					dataType: 'json',
+					type: 'post',
+					timeout: 10000,
+					headers: {
+						'Authorization': 'Bearer ' + localStorage.getItem('token') //权限验证需传入TOKEN
+					},
+					success: function(data) {
+						wd.close(); //关闭等待对话框
+						if(data.success == 1) {
+							app.userSet(data.data, false); //用户信息缓存本地
+							app.userStatus(); //触发用户状态
+							mui.toast('更新成功');
+						} else {
+							mui.toast(data.message);
+						}
+					},
+					error: function(xhr, type, errorThrown) {
+						wd.close(); //关闭等待对话框  
+						if(errorThrown == 'Unauthorized') {
+							mui.toast('请重新登录');
+						} else {
+							mui.toast('网络异常，请稍后再试');
+						}
+					}
+				});
+			};
+			mui.plusReady(function() {
+				//默认值
+				app.get('birthday').innerText = localStorage.getItem('userbirthday');
+				app.get('area-text').innerText = localStorage.getItem('userarea');
+				app.get('area-id').value = localStorage.getItem('userarea_id');
+				app.get('sign').value = localStorage.getItem('usersign');
+				//点击事件
+				app.tap('btn-birthday', selectBirthday);
+				app.tap('btn-area', selectArea);
+				app.tap('btn-update', ajaxProfile);
+			});
+		</script>
+	</body>
+
+</html>

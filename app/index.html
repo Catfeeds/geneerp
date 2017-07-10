@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+		<link href="css/mui.min.css" rel="stylesheet">
+		<link href="css/style.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav own-main-background-color">
+			<!--<span id="search" class="mui-icon mui-icon-location mui-pull-left own-white"></span>-->
+			<h1 class="mui-title">首页</h1>
+			<!--<span id="search" class="mui-icon mui-icon-search mui-pull-right own-white"></span>-->
+		</header>
+		<nav class="mui-bar mui-bar-tab">
+		</nav>
+		<script src="js/mui.min.js"></script>
+		<script src="js/app.js"></script>
+		<script>
+			mui.init({
+				swipeBack: true //启用右滑关闭功能
+			});
+			//第一次打开启动界面
+			var launchScreen = function() {
+				//test
+				//localStorage.setItem('lauchFlag', '');
+				//读取本地存储，检查是否为首次启动
+				var flag = localStorage.getItem('lauchFlag');
+				if(flag) {
+					//有值，说明已经显示过了，无需显示；
+					//关闭splash页面；
+					plus.navigator.closeSplashscreen();
+					plus.navigator.setFullscreen(false);
+				} else {
+					//显示启动导航
+					mui.openWindow({
+						id: 'guide.html',
+						url: 'guide.html',
+						show: {
+							aniShow: 'none'
+						},
+						waiting: {
+							autoShow: false
+						}
+					});
+				}
+			}
+			//tab配置
+			var tabParam = [{
+				title: '首页',
+				href: 'home.html',
+				icon: 'home'
+			}, {
+				title: '子页2',
+				href: 'tab2.html',
+				icon: 'phone'
+			}, {
+				title: '子页3',
+				href: 'tab3.html',
+				icon: 'email'
+			}, {
+				title: '我的',
+				href: 'my.html',
+				icon: 'person'
+			}];
+			//tab当前页面
+			var tabView;
+			//tab所有页面
+			var tabArray = [];
+			//初始化tab
+			var initTab = function() {
+				var html = '';
+				for(var i = 0; i < tabParam.length; i++) {
+					var active = i == 0 ? ' mui-active' : '';
+					html += '<a class="mui-tab-item' + active + '" href="' + tabParam[i].href + '"><span class="mui-icon mui-icon-' + tabParam[i].icon + '"></span><span class="mui-tab-label">' + tabParam[i].title + '</span></a>';
+				}
+				app.selector('.mui-bar-tab').innerHTML = html;
+			};
+
+			//初始化所有tab页面
+			var initTabView = function() {
+				for(var i = 0; i < tabParam.length; i++) {
+					tabArray[i] = mui.preload({
+						id: tabParam[i].href,
+						url: tabParam[i].href,
+						styles: {
+							top: '44px',
+							bottom: '44px',
+							bounce: 'vertical',
+							bounceBackground: '#41cea9'
+						},
+						waiting: {
+							autoShow: false
+						}
+					});
+					tabArray[i].hide();
+					plus.webview.currentWebview().append(tabArray[i]);
+				}
+				//默认显示第一个tab页面
+				tabArray[0].show();
+				//当前页面
+				tabView = tabArray[0];
+			};
+
+			//添加tab点击事件
+			var tapTab = function() {
+				mui('.mui-bar-tab').on('tap', '.mui-tab-item', function() {
+					var _page = this.getAttribute('href');
+					//如果要检索的字符串值没有出现，则该返回 -1
+					if(tabView.getURL().indexOf(_page) === -1) {
+						for(var i = 0; i < tabParam.length; i++) {
+							if(tabParam[i].href == _page) {
+								//更改当前页面标题
+								app.selector('.mui-title').innerText = tabParam[i].title;
+								//切换bar
+								tabArray[i].show();
+								tabView = tabArray[i];
+								break;
+							}
+						}
+					}
+				});
+			};
+
+			var searchTap = function() {
+
+			};
+
+			mui.plusReady(function() {
+				plus.navigator.setStatusBarBackground('#41cea9'); //设置bar背景颜色
+				plus.screen.lockOrientation('portrait-primary'); //设置只支持竖屏幕显示
+
+				initTab(); //初始化tab
+				initTabView(); //初始化所有tab页面
+				tapTab(); //tab点击事件
+				app.userStatus(); //触发用户状态
+			});
+
+			if(window.plus) {
+				launchScreen();
+			} else {
+				document.addEventListener('plusready', launchScreen, false);
+			}
+		</script>
+	</body>
+
+</html>

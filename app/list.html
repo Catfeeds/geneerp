@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+		<link href="css/mui.min.css" rel="stylesheet">
+		<link href="css/style.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<div class="mui-content mui-scroll-wrapper" id="refreshContainer">
+			<div class="mui-scroll">
+				<ul id="newsList" class="mui-table-view"></ul>
+			</div>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/app.js"></script>
+		<script>
+			mui.init({
+				pullRefresh: {
+					container: "#refreshContainer",
+					down: {
+						auto: true,
+						contentdown: "下拉可以刷新",
+						contentover: "释放立即刷新",
+						contentrefresh: "正在加载...",
+						callback: getList
+					},
+					up: {
+						auto: false,
+						contentrefresh: "正在加载...",
+						contentnomore: '没有更多数据了',
+						callback: getListByPage
+					}
+				}
+			});
+
+			var page = 1;
+
+			function getListByPage() {
+				var _self = this;
+				mui.ajax(app.api.contentList, {
+					data: {
+						page: page,
+					},
+					dataType: 'json', //服务器返回json格式数据
+					type: 'post', //HTTP请求类型
+					timeout: 10000, //超时时间设置为10秒；
+					success: function(data) {
+						if(data.success == 1) {
+							var count = data.data.length;
+							if(count == 0) {
+								_self.endPullupToRefresh(true);
+								return false;
+							} else {
+								var item = data.data;
+								for(var i = 0; i < count; i++) {
+									var li = document.createElement('li');
+									var html = '<a data-id="' + item[i].id + '"><img class="mui-media-object mui-pull-left" src="' + item[i].thumb + '"><div class="mui-media-body">' + item[i].title + '<p class="mui-ellipsis">' + item[i].description + '</p></div></a>';
+									li.setAttribute('class', 'mui-table-view-cell mui-media');
+									li.innerHTML = html;
+									app.get('newsList').appendChild(li);
+								}
+								page++;
+								_self.endPullupToRefresh(false);
+
+							}
+						} else {
+							mui.toast(data.message);
+						}
+					},
+					error: function(xhr, type, errorThrown) {
+						mui.toast('网络异常，请稍后再试');
+					}
+				});
+
+			}
+
+			function getList() {
+				page = 1;
+				mui.ajax(app.api.contentList, {
+					data: {
+						page: page,
+					},
+					dataType: 'json', //服务器返回json格式数据
+					type: 'post', //HTTP请求类型
+					timeout: 10000, //超时时间设置为10秒；
+					success: function(data) {
+						if(data.success == 1) {
+							var count = data.data.length;
+							var item = data.data;
+							var html = '';
+							for(var i = 0; i < count; i++) {
+								html += '<li class="mui-table-view-cell mui-media"><a data-id="' + item[i].id + '"><img class="mui-media-object mui-pull-left" src="' + item[i].thumb + '"><div class="mui-media-body">' + item[i].title + '<p class="mui-ellipsis">' + item[i].description + '</p></div></a></li>';
+							}
+							app.get('newsList').innerHTML = html;
+							mui('#refreshContainer').pullRefresh().endPulldownToRefresh();
+							mui('#refreshContainer').pullRefresh().refresh(true); //重置上拉
+							page++;
+						} else {
+							mui.toast(data.message);
+						}
+					},
+					error: function(xhr, type, errorThrown) {
+						mui.toast('网络异常，请稍后再试');
+						mui('#refreshContainer').pullRefresh().endPulldownToRefresh();
+					}
+				});
+			}
+			var detailPage = null;
+			//添加列表项的点击事件
+			mui('.mui-content').on('tap', 'a', function(e) {
+				var id = this.getAttribute('data-id');
+				//console.log(id);
+				//获得详情页面
+				if(!detailPage) {
+					detailPage = plus.webview.getWebviewById('detail.html');
+				}
+				//触发详情页面事件
+				mui.fire(detailPage, 'detail', {
+					id: id
+				});
+
+				mui.openWindow({
+					url: 'detail.html',
+					id: 'detail.html',
+					show: {
+						autoShow: true, //页面loaded事件发生后自动显示，默认为true
+						duration: 100,
+						aniShow: 'slide-in-right',
+					},
+				})
+			});
+		</script>
+	</body>
+
+</html>

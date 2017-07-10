@@ -1,0 +1,24 @@
+#online{position:fixed;top:148px;right:5px;z-index:4;width:98px;height:auto;background:#fff}
+#online .top{width:98px;height:60px;background:url(../img/float_top.png) no-repeat}
+#online .middle{width:98px;text-align:center;background:#333}
+#online .middle a{
+    display: inline-block;
+    width: 42px;
+    padding-left: 24px;
+    background: url(../img/qq_bg.jpg) no-repeat left center;
+    border-top: 1px solid #181818;
+    border-bottom: 1px solid #515151;
+    font-size: 16px;
+    line-height: 50px;
+    color: #fff;
+}
+#online .middle a.first{
+    border-top: none;
+}
+#online .middle a.last{
+    border-bottom: none;
+}
+#online .middle .qrcode{width:72px;height:72px;padding:13px;}
+#online .close{float:right;cursor:pointer}
+.right_bar{position:fixed;top:50%;right:0;z-index:9999;display:none;width:28px;height:95px}
+.right_bar img{cursor:pointer}

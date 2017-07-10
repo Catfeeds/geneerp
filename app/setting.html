@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Document</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+		<link href="css/mui.min.css" rel="stylesheet">
+		<link href="css/style.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav own-main-background-color">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">设置</h1>
+		</header>
+		<div class="mui-content">
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right">
+						我的账号
+					</a>
+				</li>
+			</ul>
+			<ul class="mui-table-view own-mt20">
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right">推送消息设置</a>
+				</li>
+				<li class="mui-table-view-cell mui-plus-visible">
+					<a id="share" class="mui-navigate-right">分享推荐</a>
+				</li>
+			</ul>
+			<ul class="mui-table-view own-mt20">
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right">
+						关于我们
+					</a>
+				</li>
+				<li class="mui-table-view-cell">
+					<a class="mui-navigate-right">
+						用户协议
+					</a>
+				</li>
+			</ul>
+
+			<ul id="btn-logout" class="mui-table-view own-mtb20">
+				<li class="mui-table-view-cell mui-text-center">
+					<span class="own-alert-color">退出登录</span>
+				</li>
+			</ul>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/app.js"></script>
+		<script>
+			mui.init({
+				swipeBack: true //启用右滑关闭功能
+			});
+			//注销账号
+			var _loginOut = function() {
+				//localStorage.clear();
+				localStorage.removeItem('token');
+				app.userStatus(); //触发用户状态
+				mui.back();
+			};
+
+			var loginOut = function() {
+				mui.confirm('确认注销账号？', '', ['是', '否'], function(e) {
+					if(e.index == 0) {
+						if(mui.os.ios) {
+							//注销账号
+							_loginOut();
+							return;
+						}
+						var btnArray = [{
+							title: '注销当前账号'
+						}, {
+							title: '直接关闭应用'
+						}];
+						plus.nativeUI.actionSheet({
+							cancel: '取消',
+							buttons: btnArray
+						}, function(event) {
+							var index = event.index;
+							switch(index) {
+								case 1:
+									//注销账号
+									_loginOut();
+									break;
+								case 2:
+									plus.runtime.quit();
+									break;
+							}
+						});
+					}
+				});
+			};
+
+			/**
+			 * 发送分享消息
+			 */
+			var shareMessage = function(s, ex) {
+				var msg = {
+					href: 'http://www.kangliyixue.com',
+					title: '分享测试标题',
+					content: '分享测试标题内容介绍',
+					thumbs: ['http://img3.3lian.com/2013/v10/4/87.jpg'],
+					pictures: ['http://img3.3lian.com/2013/v10/4/87.jpg'],
+					extra: {
+						scene: ex
+					}
+				};
+				s.send(msg, function() {
+					console.log("分享成功!");
+				}, function(e) {
+					console.log("分享失败!");
+				});
+			};
+
+			var share = function() {
+				app.shareHref(shareMessage);
+			};
+
+			mui.plusReady(function() {
+				app.updateSerivces();//更新分享服务
+				app.tap('btn-logout', loginOut);
+				app.tap('share', share);
+			});
+		</script>
+	</body>
+
+</html>

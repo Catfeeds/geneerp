@@ -1,0 +1,206 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+		<link href="css/mui.min.css" rel="stylesheet">
+		<link href="css/style.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav own-main-background-color">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">我的资料</h1>
+			<span id="update-profile" class="mui-icon mui-icon-gear mui-pull-right own-white"></span>
+		</header>
+		<div class="mui-content">
+			<div class="headbg">
+				<div class="headdiv">
+					<img id="userhead" src="img/default.png">
+				</div>
+				<div class="headtext" id="username">请登录</div>
+			</div>
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell">我的积分：<span id="userpoint"></span></li>
+				<li class="mui-table-view-cell">加入时间：<span id="userregister"></span></li>
+				<li id="userbirthday-tap" class="mui-table-view-cell">
+					<a class="mui-navigate-right">我的生日：<span id="userbirthday"></span></a>
+				</li>
+				<li id="userarea-tap" class="mui-table-view-cell">
+					<a class="mui-navigate-right">所在地区：<span id="userarea"></span></a>
+				</li>
+				<li id="usersign-tap" class="mui-table-view-cell">个性签名：<span id="usersign" class="own-l15"></span></li>
+			</ul>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/app.js"></script>
+		<script>
+			mui.init({
+				swipeBack: true //启用右滑关闭功能
+			});
+			//根据本地用户信息初始化用户信息显示
+			var userStatus = function() {
+				if(mui.os.plus) {
+					plus.io.resolveLocalFileSystemURL("_doc/head.jpg", function(entry) {
+						var s = entry.fullPath + "?version=" + new Date().getTime();;
+						app.get('userhead').src = s;
+					}, function(e) {
+						app.get('userhead').src = 'img/default.png';
+					})
+				} else {
+					app.get('userhead').src = 'img/default.png';
+				}
+				if(localStorage.getItem('token')) {
+					app.get('username').innerText = localStorage.getItem('username');
+				} else {
+					app.get('username').innerText = '请登录';
+				}
+				app.get('userpoint').innerText = localStorage.getItem('userpoint');
+				app.get('userregister').innerText = localStorage.getItem('userregister');
+				app.get('userbirthday').innerText = localStorage.getItem('userbirthday');
+				app.get('userarea').innerText = localStorage.getItem('userarea');
+				app.get('usersign').innerText = localStorage.getItem('usersign');
+			};
+
+			var profileTap = function() {
+				app.tap(['update-profile', 'userbirthday-tap', 'userarea-tap', 'usersign-tap'], function() {
+					app.open('update-profile.html');
+				});
+			};
+
+			var headTap = function() {
+				app.tap('userhead', function() {
+					if(mui.os.plus) {
+						var a = [{
+							title: '拍照'
+						}, {
+							title: '从手机相册选择'
+						}];
+						plus.nativeUI.actionSheet({
+							title: '更新头像',
+							cancel: '取消',
+							buttons: a
+						}, function(b) { /*actionSheet 按钮点击事件*/
+							switch(b.index) {
+								case 0:
+									break;
+								case 1:
+									getImage(); /*拍照*/
+									break;
+								case 2:
+									galleryImg(); /*打开相册*/
+									break;
+								default:
+									break;
+							}
+						});
+					}
+				});
+			};
+
+			//上传头像图片 
+			var uploadHead = function(imgPath) {
+				var wd = plus.nativeUI.showWaiting();
+				var image = new Image();
+				image.src = imgPath;
+				//console.log(imgPath);
+				image.onload = function() {
+					var imageData = app.getBase64Image(image, 100);
+					//console.log(imageData);
+					mui.ajax(app.api.uploadHead, {
+						data: {
+							head: imageData // 图片数据流
+						},
+						dataType: 'json',
+						type: 'post',
+						timeout: 10000,
+						headers: {
+							'Authorization': 'Bearer ' + localStorage.getItem('token') //权限验证需传入TOKEN
+						},
+						success: function(data) {
+							wd.close(); //关闭等待对话框  
+							if(data.success == 1) {
+								app.userStatus();
+							} else {
+								mui.toast(data.message);
+							}
+						},
+						error: function(xhr, type, errorThrown) {
+							wd.close(); //关闭等待对话框 
+							if(errorThrown == 'Unauthorized') {
+								mui.toast('请重新登录');
+							} else {
+								mui.toast('网络异常，请稍后再试');
+							}
+						}
+					});
+				}
+			};
+			//拍照
+			function getImage() {
+				var cmr = plus.camera.getCamera();
+				cmr.captureImage(function(path) {
+					plus.io.resolveLocalFileSystemURL(path, function(entry) {
+						var _path = entry.toLocalURL() + "?version=" + new Date().getTime();
+						uploadHead(_path);
+					}, function(e) {
+						console.log(e.message);
+					});
+				}, function(e) {
+					console.log(e.message);
+				}, {
+					filename: '_doc/head.jpg'
+				})
+			}
+
+			//相册
+			var galleryImg = function() {
+				plus.gallery.pick(function(path) {
+					plus.io.resolveLocalFileSystemURL(path, function(entry) {
+						plus.io.resolveLocalFileSystemURL("_doc/", function(root) {
+							root.getFile('head.jpg', {}, function(file) {
+								//文件已存在
+								file.remove(function() {
+									//console.log("file remove success");
+									entry.copyTo(root, 'head.jpg', function(e) {
+											var _path = e.fullPath + '?version=' + new Date().getTime();
+											uploadHead(_path);
+										},
+										function(e) {
+											console.log('copy image fail:' + e.message);
+										});
+								}, function(e) {
+									console.log('delete image fail:' + e.message);
+								});
+							}, function() {
+								//文件不存在
+								entry.copyTo(root, 'head.jpg', function(e) {
+										var _path = e.fullPath + '?version=' + new Date().getTime();
+										uploadHead(_path);
+									},
+									function(e) {
+										console.log('copy image fail:' + e.message);
+									});
+							});
+						}, function(e) {
+							console.log(e.message);
+						})
+					}, function(e) {
+						console.log(e.message);
+					});
+				}, function(a) {}, {
+					filter: 'image'
+				})
+			};
+			mui.plusReady(function() {
+				headTap();
+				profileTap();
+				userStatus();
+				window.addEventListener('userStatus', userStatus); //自定义事件监听
+			});
+		</script>
+	</body>
+
+</html>

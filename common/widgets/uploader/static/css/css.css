@@ -1,0 +1,9 @@
+.upload_div{position:relative;float:left;margin-right:10px;margin-bottom:10px;width:145px;padding:10px;border:1px #ccc solid;}
+.upload_title{line-height:20px;height:20px;font-size:12px;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;}
+.upload_size{line-height:20px;font-size:12px;}
+.upload_size span.success{width:16px;height:20px;background:url(../img/success.gif) no-repeat;cursor:pointer;}
+.upload_size span.delete{float:right;line-height:20px;cursor:pointer;color:#f00;}
+.upload_size span.cancel{float:right;width:16px;height:20px;background:url(../img/cancel.gif) no-repeat;cursor:pointer;}
+.progress_div{position:absolute;top:0;left:0;width:143px;visibility:hidden;}
+.container_div{margin-bottom:10px;}
+.filelist_div{min-height:190px;}

@@ -1,0 +1,19 @@
+{
+  "guide.html": {
+    "href": "guide.html",
+    "resources": [
+      "css/mui.min.css",
+      "fonts/mui.ttf",
+      "js/mui.min.js"
+    ],
+    "priority": 5
+  },
+  "index.html": {
+    "href": "index.html",
+    "resources": [],
+    "refer": [
+      "guide.html"
+    ],
+    "priority": 0
+  }
+}
